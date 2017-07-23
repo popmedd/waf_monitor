@@ -12,7 +12,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from masscan import masscan
 import ConfigParser
-
+import importlib
 
 def is_web_service(ip, port, web_type):
 
@@ -43,7 +43,10 @@ def get_alive_web_service(ip_seg):
         os.mkdir(output_dir)
 
     output_file = os.path.join(output_dir, time.strftime("%Y%m%d%H%m%S"))
-    res = masscan.run(ip_seg=ip_seg, output_file=output_file)
+
+    masscan_max_rate = get_config('masscan', 'max_rate')
+    masscan_port_range = get_config('masscan', 'port_range')
+    res = masscan.run(ip_seg=ip_seg, output_file=output_file, rate=masscan_max_rate, port_range=masscan_port_range)
 
     for x in range(len(res)-1, -1, -1):
         ip, port, web_type = res[x]
@@ -52,17 +55,6 @@ def get_alive_web_service(ip_seg):
             del res[x]
 
     return res
-
-'''
-waf_session_id = login_waf("192.200.0.87", "8083", "admin", "Crc_waf7")
-sites_list = get_all_site("192.200.0.87", "8083", waf_session_id)
-
-if r'DMZ' not in sites_list:
-    print "Error: DMZ not in sites"
-    exit()
-
-server_group_list = get_all_server_group("192.200.0.87", "8083", waf_session_id, "DMZ")
-'''
 
 
 def get_config(section, option):
@@ -81,25 +73,35 @@ if __name__ == '__main__':
     for ip_seg in ip_seg_list:
         web_res = get_alive_web_service(ip_seg)
 
-        from poc import poc_xss
-
         check_result = []
         for x in web_res:
             ip, port, web_type = x
-            tmp_check = {}
             if web_type == 'http':
                 url = "http://" + ip + ":" + port
             elif web_type == 'ssl':
                 url = "https://" + ip + ":" + port
 
-            check_xss = poc_xss.XssPOC()
-            check_xss.url = url
-            check_xss_result = check_xss.attack()
+            poc_list = json.loads(get_config('poc', 'poc_msg'))
 
-            if check_xss_result is True:
-                print ip + '---' + port + '---' + web_type + '---' + 'protected'
-            else:
-                print ip + '---' + port + '---' + web_type + '---' + 'not in protected'
+            tmp_check = {'ip': ip, 'port': port, 'web_type': web_type}
+            for _poc in poc_list:
+                poc_name = _poc['poc_name']
+                class_name = _poc['class_name']
+
+                try:
+                    poc_mod = importlib.import_module('poc.'+poc_name)
+                    poc_class = getattr(poc_mod, class_name)
+                    poc_obj = poc_class()
+                    poc_obj.url = url
+                    poc_result = poc_obj.attack()
+                    tmp_check[poc_class] = poc_result
+                except Exception as e:
+                    print e
+
+                print ip + '---' + port + '---' + web_type + '---' + poc_name + '---' + poc_result
+
+            check_result.append(tmp_check)
+
 
 
 
