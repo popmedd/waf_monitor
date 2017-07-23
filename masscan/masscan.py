@@ -10,9 +10,6 @@ import logging
 
 def run(ip_seg, output_file, rate=500, port_range='1-65535'):
 
-    logger = logging.getLogger('waf_monitor')
-    logger.debug('masscan module')
-
     # 对于已存在的文件进行剪切和备份
     if os.path.isfile(output_file):
         print "Warning:Output File already exist"
@@ -33,8 +30,9 @@ def run(ip_seg, output_file, rate=500, port_range='1-65535'):
         path = os.path.join(path, 'masscan')
 
     scan_command = str.format("%s -p%s %s --banners -oL %s  --max-rate %s"%(path, port_range, ip_seg, output_file, rate))
+    logger = logging.getLogger('waf_monitor')
+    logger.debug('Action:' + scan_command)
     #scan_command = str.format("%s -p80,443 %s --banners -oL %s  --max-rate %s"%(path, ip_seg, output_file, rate))
-    print scan_command
     os.system(scan_command)
 
     # 读取masscan的输出文件，处理、切割，输出需要的内容
@@ -56,6 +54,10 @@ def run(ip_seg, output_file, rate=500, port_range='1-65535'):
                 res.append((con_list[3], con_list[2], con_list[5]))
         except:
             pass
+
+
+    logger = logging.getLogger('waf_monitor')
+    logger.debug("Action: masscan.py return" + str(res))
 
     return res
 

@@ -21,21 +21,19 @@ def is_web_service(ip, port, web_type):
 
     if web_type == 'ssl':
         url = 'https://' + ip + ':' + port + '/'
-        print url
         try:
             r = requests.get(url=url, verify=False, timeout=5)
+            logger.info(json.dumps({'url': url, 'ip': ip, 'port': port, 'web_type': web_type}))
         except requests.RequestException as e:
-            print url + "\n"
-            print e
+            logger.debug(json.dumps({'url': url, 'except_msg': str(e)}))
             return False
     else:
+        url = 'http://' + ip + ':' + port + '/'
         try:
-            url = 'http://' + ip + ':' + port + '/'
-            print url
             r = requests.get(url=url, verify=False, timeout=5)
+            logger.info(json.dumps({'url': url, 'ip': ip, 'port': port, 'web_type': web_type}))
         except requests.RequestException as e:
-            print url + "\n"
-            print e
+            logger.debug(json.dumps({'url': url, 'except_msg': str(e)}))
             return False
     return True
 
@@ -76,19 +74,23 @@ if __name__ == '__main__':
 
     ip_seg_list = json.loads(get_config('basic', 'ip_seg'))['ip_seg']
 
+    logger.debug('Action: start to find alive web port')
     for ip_seg in ip_seg_list:
         web_res = get_alive_web_service(ip_seg)
 
+        logger.debug('Action: start to check waf protect function')
         check_result = []
         for x in web_res:
             ip, port, web_type = x
+
             if web_type == 'http':
                 url = "http://" + ip + ":" + port
             elif web_type == 'ssl':
                 url = "https://" + ip + ":" + port
 
-            poc_list = json.loads(get_config('poc', 'poc_msg'))
+            logger.debug('Action: start to check for url\"' + url + '\"')
 
+            poc_list = json.loads(get_config('poc', 'poc_msg'))
             tmp_check = {'ip': ip, 'port': port, 'web_type': web_type}
             for _poc in poc_list:
                 poc_name = _poc['poc_name']
