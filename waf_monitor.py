@@ -13,6 +13,9 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from masscan import masscan
 import ConfigParser
 import importlib
+import logging
+import logging.config
+
 
 def is_web_service(ip, port, web_type):
 
@@ -66,7 +69,10 @@ def get_config(section, option):
 
     return config_value
 
+
 if __name__ == '__main__':
+    logging.config.fileConfig('logging.conf')
+    logger = logging.getLogger('waf_monitor')
 
     ip_seg_list = json.loads(get_config('basic', 'ip_seg'))['ip_seg']
 
@@ -96,12 +102,11 @@ if __name__ == '__main__':
                     poc_result = poc_obj.attack()
                     tmp_check[poc_class] = poc_result
                 except Exception as e:
-                    print e
+                    print str(e)
 
-                print ip + '---' + port + '---' + web_type + '---' + poc_name + '---' + poc_result
+                print ip + '---' + port + '---' + web_type + '---' + poc_name + '---' + str(poc_result)
 
             check_result.append(tmp_check)
-
 
 
 

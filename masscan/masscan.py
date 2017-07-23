@@ -5,9 +5,13 @@
 import os
 import shutil
 import platform
+import logging
 
 
 def run(ip_seg, output_file, rate=500, port_range='1-65535'):
+
+    logger = logging.getLogger('waf_monitor')
+    logger.debug('masscan module')
 
     # 对于已存在的文件进行剪切和备份
     if os.path.isfile(output_file):
