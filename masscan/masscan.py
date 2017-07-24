@@ -48,6 +48,7 @@ def run(ip_seg, output_file, rate=500, port_range='1-65535'):
     except:
         return res
 
+    # 抓取Web的条目
     for content in file_content:
         try:
             con_list = content.split(' ', 8)
@@ -55,7 +56,6 @@ def run(ip_seg, output_file, rate=500, port_range='1-65535'):
                 res.append((con_list[3], con_list[2], con_list[5]))
         except:
             pass
-
 
     logger = logging.getLogger('waf_monitor')
     logger.debug("Action: masscan.py return" + str(res))

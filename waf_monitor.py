@@ -7,9 +7,9 @@ import os
 import sys
 import time
 import json
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+#from requests.packages.urllib3.exceptions import InsecureRequestWarning
 # 禁用安全请求警告
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+#requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from masscan import masscan
 import ConfigParser
 import importlib
@@ -17,6 +17,7 @@ import logging
 import logging.config
 
 
+# 通过发起Web请求请求确认是否是Web服务
 def is_web_service(ip, port, web_type):
 
     if web_type == 'ssl':
@@ -38,17 +39,21 @@ def is_web_service(ip, port, web_type):
     return True
 
 
+# 获取存活的Web服务信息
 def get_alive_web_service(ip_seg):
+
+    # 获取masscan输出路径
     output_dir = os.path.join(sys.path[0], 'masscan_output')
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-
+    # 获取masscan输出文件名
     output_file = os.path.join(output_dir, time.strftime("%Y%m%d%H%m%S"))
-
+    # 读取配置中masscan的参数并调用masscan
     masscan_max_rate = get_config('masscan', 'max_rate')
     masscan_port_range = get_config('masscan', 'port_range')
     res = masscan.run(ip_seg=ip_seg, output_file=output_file, rate=masscan_max_rate, port_range=masscan_port_range)
 
+    # 将masscan结果进行复查，筛除错误
     for x in range(len(res)-1, -1, -1):
         ip, port, web_type = res[x]
         check_result = is_web_service(ip=ip, port=port, web_type=web_type)
@@ -58,6 +63,7 @@ def get_alive_web_service(ip_seg):
     return res
 
 
+# 读取配置
 def get_config(section, option):
 
     conf_file = os.path.join(sys.path[0], 'waf_monitor.conf')
@@ -69,15 +75,22 @@ def get_config(section, option):
 
 
 if __name__ == '__main__':
+
+    # 配置logging过滤器
     logging.config.fileConfig('logging.conf')
     logger = logging.getLogger('waf_monitor')
 
     ip_seg_list = json.loads(get_config('basic', 'ip_seg'))['ip_seg']
 
     logger.debug('Action: start to find alive web port')
+
+    # 开始执行检查
     for ip_seg in ip_seg_list:
+
+        # Web端口获取
         web_res = get_alive_web_service(ip_seg)
 
+        # poc执行检验waf功能
         logger.debug('Action: start to check waf protect function')
         check_result = []
         for x in web_res:
@@ -90,12 +103,14 @@ if __name__ == '__main__':
 
             logger.debug('Action: start to check for url\"' + url + '\"')
 
+            # 调用poc
             poc_list = json.loads(get_config('poc', 'poc_msg'))
             tmp_check = {'ip': ip, 'port': port, 'web_type': web_type}
             for _poc in poc_list:
                 poc_name = _poc['poc_name']
                 class_name = _poc['class_name']
 
+                # 动态载入poc模块和poc类
                 try:
                     poc_mod = importlib.import_module('poc.'+poc_name)
                     poc_class = getattr(poc_mod, class_name)
@@ -106,7 +121,10 @@ if __name__ == '__main__':
                 except Exception as e:
                     logger.debug('Error:' + str(e))
 
-                logger.info(json.dumps({'ip': ip, 'port': port, 'web_type': web_type, 'poc_name': poc_name, 'poc_result': str(poc_result)}))
+                if poc_result == True:
+                    logger.info(json.dumps({'ip': ip, 'port': port, 'web_type': web_type, 'poc_name': poc_name, 'poc_result': str(poc_result)}))
+                elif poc_result == False:
+                    logger.error(json.dumps({'ip': ip, 'port': port, 'web_type': web_type, 'poc_name': poc_name, 'poc_result': str(poc_result)}))
 
             check_result.append(tmp_check)
 
