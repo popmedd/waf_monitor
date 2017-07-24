@@ -26,10 +26,11 @@ def run(ip_seg, output_file, rate=500, port_range='1-65535'):
         path = os.path.join(path, 'masscan.exe')
     elif sys_type == 'Linux':
         path = os.path.join(path, 'masscan')
+        os.system('iptables -A INPUT -p tcp --dport 60000 -j DROP')
     else:
         path = os.path.join(path, 'masscan')
 
-    scan_command = str.format("%s -p%s %s --banners -oL %s  --max-rate %s"%(path, port_range, ip_seg, output_file, rate))
+    scan_command = str.format("%s -p%s %s --banners -oL %s  --max-rate %s --source-port 60000"%(path, port_range, ip_seg, output_file, rate))
     logger = logging.getLogger('waf_monitor')
     logger.debug('Action:' + scan_command)
     #scan_command = str.format("%s -p80,443 %s --banners -oL %s  --max-rate %s"%(path, ip_seg, output_file, rate))

@@ -104,11 +104,13 @@ if __name__ == '__main__':
                     poc_result = poc_obj.attack()
                     tmp_check[poc_class] = poc_result
                 except Exception as e:
-                    print str(e)
+                    logger.debug('Error:' + str(e))
 
-                print ip + '---' + port + '---' + web_type + '---' + poc_name + '---' + str(poc_result)
+                logger.info(json.dumps({'ip': ip, 'port': port, 'web_type': web_type, 'poc_name': poc_name, 'poc_result': str(poc_result)}))
 
             check_result.append(tmp_check)
+
+        logger.debug('Result:' + str(check_result))
 
 
 
