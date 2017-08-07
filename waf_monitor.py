@@ -16,6 +16,7 @@ import ConfigParser
 import importlib
 import logging
 import logging.config
+from common import get_config
 
 
 # 通过发起Web请求请求确认是否是Web服务
@@ -88,17 +89,6 @@ def masscan_engine(ip_seg):
     res = masscan.run(ip_seg=ip_seg, output_file=output_file, rate=masscan_max_rate, port_range=masscan_port_range)
 
     return res
-
-
-# 读取配置
-def get_config(section, option):
-
-    conf_file = os.path.join(sys.path[0], 'waf_monitor.conf')
-    cp = ConfigParser.SafeConfigParser()
-    cp.read(filenames=conf_file)
-    config_value = cp.get(section=section, option=option)
-
-    return config_value
 
 
 if __name__ == '__main__':

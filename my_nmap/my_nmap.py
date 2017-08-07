@@ -6,7 +6,7 @@ import os
 import shutil
 import platform
 import logging
-#from waf_monitor import get_config
+from common import get_config
 from xml.dom.minidom import parse
 import xml.dom.minidom
 
@@ -25,7 +25,7 @@ def run(ip_seg, output_file, rate=500, port_range='1-65535'):
     rate = str(int(rate))
 
     # 获取当前操作系统类型，选择合适的nmap程序并整合及执行命令
-    path = '/usr/bin/nmap' #get_config('scan', 'nmap_path')
+    path = get_config('scan', 'nmap_path')
     sys_type = platform.system()
     if sys_type == 'Windows':
         logging.error('Error: Use nmap in Windows')
