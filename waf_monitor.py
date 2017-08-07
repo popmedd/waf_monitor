@@ -11,6 +11,7 @@ import json
 # 禁用安全请求警告
 #requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from masscan import masscan
+from my_nmap import my_nmap
 import ConfigParser
 import importlib
 import logging
@@ -42,6 +43,39 @@ def is_web_service(ip, port, web_type):
 # 获取存活的Web服务信息
 def get_alive_web_service(ip_seg):
 
+    engine_type = get_config('basic', 'engine')
+
+    if engine_type == 'masscan':
+        res = masscan_engine(ip_seg=ip_seg)
+    elif engine_type == 'nmap':
+        res = nmap_engine(ip_seg=ip_seg)
+
+    # 将scan结果进行复查，筛除错误
+    for x in range(len(res)-1, -1, -1):
+        ip, port, web_type = res[x]
+        check_result = is_web_service(ip=ip, port=port, web_type=web_type)
+        if check_result is False:
+            del res[x]
+
+    return res
+
+
+def nmap_engine(ip_seg):
+    # 获取nmap输出路径
+    output_dir = os.path.join(sys.path[0], 'nmap_output')
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    # 获取nmap输出文件名
+    output_file = os.path.join(output_dir, time.strftime("%Y%m%d%H%m%S"))
+    # 读取配置中nmap的参数并调用masscan
+    nmap_max_rate = get_config('scan', 'max_rate')
+    nmap_port_range = get_config('scan', 'port_range')
+    res = my_nmap.run(ip_seg=ip_seg, output_file=output_file, rate=nmap_max_rate, port_range=nmap_port_range)
+
+    return res
+
+def masscan_engine(ip_seg):
+
     # 获取masscan输出路径
     output_dir = os.path.join(sys.path[0], 'masscan_output')
     if not os.path.exists(output_dir):
@@ -49,16 +83,9 @@ def get_alive_web_service(ip_seg):
     # 获取masscan输出文件名
     output_file = os.path.join(output_dir, time.strftime("%Y%m%d%H%m%S"))
     # 读取配置中masscan的参数并调用masscan
-    masscan_max_rate = get_config('masscan', 'max_rate')
-    masscan_port_range = get_config('masscan', 'port_range')
+    masscan_max_rate = get_config('scan', 'max_rate')
+    masscan_port_range = get_config('scan', 'port_range')
     res = masscan.run(ip_seg=ip_seg, output_file=output_file, rate=masscan_max_rate, port_range=masscan_port_range)
-
-    # 将masscan结果进行复查，筛除错误
-    for x in range(len(res)-1, -1, -1):
-        ip, port, web_type = res[x]
-        check_result = is_web_service(ip=ip, port=port, web_type=web_type)
-        if check_result is False:
-            del res[x]
 
     return res
 
