@@ -35,18 +35,19 @@ def run(ip_seg, output_file, rate=500, port_range='1-65535'):
     else:
         pass
 
-    scan_command = str.format("%s -p%s %s --script=banner -oX %s --max-rate %s "%(path, port_range, ip_seg, output_file, rate))
+    scan_command = str.format("%s -p%s %s --script=banner -oX %s --max-rate %s -version-all"%(path, port_range, ip_seg, output_file, rate))
 
     logger.debug('Action:' + scan_command)
-    #scan_command = str.format("%s -p80,443 %s --banners -oL %s  --max-rate %s"%(path, ip_seg, output_file, rate))
     os.system(scan_command)
 
+    # 调用xml分析功能
     res = _parse_xml(output_file=output_file)
 
     logger = logging.getLogger('waf_monitor')
     logger.debug("Action: masscan.py return" + str(res))
 
     return res
+
 
 def _parse_xml(output_file):
     parse_list = []
@@ -61,26 +62,34 @@ def _parse_xml(output_file):
         web_type = ''
 
         addresses = host.getElementsByTagName('address')
+
+        # 获取xml中host标签下所有address
         for address in addresses:
             if address.getAttribute('addrtype') == 'ipv4':
                 ip = address.getAttribute('addr')
 
+        # 获取xml中host标签下所有port
         ports = host.getElementsByTagName('port')
         for tag_port in ports:
-            port = tag_port.getAttribute('portid')
 
-            state = tag_port.getElementsByTagName('state')[0]
+            # 获取符合条件的port、service加入队列（部分元素可能不存在）
+            try:
+                port = tag_port.getAttribute('portid')
+                state = tag_port.getElementsByTagName('state')[0]
 
-            if state.getAttribute('state') == 'open':
-                service = tag_port.getElementsByTagName('service')[0]
-                name = service.getAttribute('name')
+                if state.getAttribute('state') == 'open':
+                    service = tag_port.getElementsByTagName('service')[0]
+                    name = service.getAttribute('name')
 
-                if name == 'http':
-                    parse_list.append((ip,port,'http'))
-                elif name == 'https':
-                    parse_list.append((ip,port,'ssl'))
-                else:
-                    pass
+                    # 处理service是http和https的
+                    if 'http' in name:
+                        parse_list.append((ip, port, 'http'))
+                    elif 'https' in name:
+                        parse_list.append((ip, port, 'ssl'))
+                    else:
+                        pass
+            except:
+                logging.error('Error in parse nmap xml')
 
     return parse_list
 
