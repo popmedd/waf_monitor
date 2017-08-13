@@ -18,6 +18,7 @@ class XssPOC(BasePoc):
         self.vulType = 'Cross Site Scripting'
         self.url = url
 
+    @re_try()
     def attack(self):
 
         vul_url = '%s/?q=node<script>alert(\'sec_test\')</script>' % self.url

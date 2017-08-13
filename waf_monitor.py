@@ -135,8 +135,8 @@ if __name__ == '__main__':
                 try:
                     poc_mod = importlib.import_module('poc.'+poc_name)
                     poc_class = getattr(poc_mod, class_name)
-                    poc_obj = poc_class()
-                    poc_obj.url = url
+                    poc_obj = poc_class(url)
+                    #poc_obj.url = url
                     poc_result = poc_obj.attack()
                     tmp_check[poc_class] = poc_result
                 except Exception as e:
