@@ -78,18 +78,21 @@ def _parse_xml(output_file):
                 state = tag_port.getElementsByTagName('state')[0]
 
                 if state.getAttribute('state') == 'open':
-                    service = tag_port.getElementsByTagName('service')[0]
-                    name = service.getAttribute('name')
+                    if (len(tag_port.getElementsByTagName('service')) != 0):
+                        service = tag_port.getElementsByTagName('service')[0]
+                        name = service.getAttribute('name')
 
-                    # 处理service是http和https的
-                    if 'http' in name:
-                        parse_list.append((ip, port, 'http'))
-                    elif 'https' in name:
-                        parse_list.append((ip, port, 'ssl'))
-                    else:
-                        pass
+                        # 处理service是http和https的
+                        if 'http' in name:
+                            parse_list.append((ip, port, 'http'))
+                        elif 'https' in name:
+                            parse_list.append((ip, port, 'ssl'))
+                        else:
+                            pass
+            
             except:
                 logging.error('Error in parse nmap xml')
+                pass
 
     return parse_list
 

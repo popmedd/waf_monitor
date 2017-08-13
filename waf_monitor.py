@@ -111,6 +111,10 @@ if __name__ == '__main__':
         logger.debug('Action: start to check waf protect function')
         check_result = []
         for x in web_res:
+
+            # 随机时间间隔
+            # 验证器，对于Connect Error的使用WAF API进行确认
+
             ip, port, web_type = x
 
             if web_type == 'http':

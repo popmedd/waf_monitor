@@ -1,41 +1,38 @@
 # -*- coding: utf-8 -*-
 # Author:g0dlike
 # CreateDate:2017年7月22日
+# UpdateDate:2017年8月13日
 import re
 import requests
+from poc_base import BasePoc
+from poc_base import re_try
 
 
-class SqliPOC(object):
+class SqliPOC(BasePoc):
 
-    version = '1'
-    author = 'g0dlike'
-    createDate = '2017-7-22'
-    updateDate = '2017-7-22'
-    name = 'SQL Inject'
-    vulType = 'SQL Injection'
-    waf_info = "This page can't be displayed. Contact support for additional information"
+    def __init__(self, url):
+        BasePoc.__init__(self)
 
-    url = ''
+        self.createDate = '2017-7-22'
+        self.updateDate = '2017-7-22'
+        self.name = 'SQL Inject'
+        self.vulType = 'SQL Injection'
+        self.url = url
 
     def attack(self):
-        result = {}
         vul_url = '%s/?q=node\' and union select * from sec_test ' % self.url
 
-        r = requests.get(vul_url, verify=False)
+        try:
+            r = requests.get(vul_url, verify=False)
+        except requests.ConnectionError:
+            # 可能的封禁
+            raise requests.ConnectionError
+        except requests.RequestException, e:
+            raise requests.RequestException
 
-        if re.findall(self.waf_info, r.text):
-            return True
-        else:
-            return False
+        return self.is_in_protected(r)
 
-    def info(self):
 
-        print "name:" + self.name + "\n"
-        print "version:" + self.version + "\n"
-        print "author:" + self.author + "\n"
-        print "createDate:" + self.createDate + "\n"
-        print "updateDate:" + self.updateDate + "\n"
-        print "vulType:" + self.vulType + "\n"
 
 
 
